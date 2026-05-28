@@ -81,6 +81,13 @@ let canBuildDDS = !isAndroidBuild && (!isWindowsBuild || windowsCycloneDDSDir !=
 
 let releaseBaseURL = "https://github.com/youtalk/swift-ros2/releases/download/1.1.0"
 
+// [ARROSkit ADR-0016 P3] CycloneDDS 11.0.1 rebuild (vs upstream's 0.10.5)
+// hosted on the AmadeusSVX fork. Drop-in xcframework with the same slice
+// layout; see release notes for the minimal iOS-SDK header gating applied
+// to CycloneDDS source (raweth + netstat/darwin).
+let cyclonedddsReleaseURL =
+    "https://github.com/AmadeusSVX/swift-ros2/releases/download/arroskit-cdds11.0.1"
+
 // Non-unix zenoh-pico platform backends shared between the Linux and
 // Android arms — both use the unix backend inside `src/system/unix`.
 let zenohPicoNonUnixBackends = [
@@ -358,8 +365,8 @@ if canBuildDDS {
         } else {
             return .binaryTarget(
                 name: "CCycloneDDS",
-                url: "\(releaseBaseURL)/CCycloneDDS.xcframework.zip",
-                checksum: "8f4a70ba1a943a0c3ab8a866842a9c1915f231c31a436bbd5584babdf25bd156"
+                url: "\(cyclonedddsReleaseURL)/CCycloneDDS.xcframework.zip",
+                checksum: "a93fb33029840d65e12126c93eb06947a21a2573e8f900ce0f85fe96e62c37b4"
             )
         }
     }()
