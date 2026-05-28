@@ -216,13 +216,17 @@ static char* build_domain_config_xml(int32_t domain_id, const bridge_discovery_c
             return NULL;
         }
 
-        // Disable multicast SPDP if in unicast-only mode
-        if (config->mode == BRIDGE_DISCOVERY_UNICAST) {
-            if (!xml_append(&xml, &offset,
-                "      <EnableTopicDiscoveryEndpoints>true</EnableTopicDiscoveryEndpoints>\n")) {
-                return NULL;
-            }
-        }
+        // [ARROSkit ADR-0016 P1] Do NOT emit <EnableTopicDiscoveryEndpoints>.
+        // Upstream emitted this only in BRIDGE_DISCOVERY_UNICAST mode, but
+        // CycloneDDS (verified on 0.10.5) does not accept this element at
+        // //CycloneDDS/Domain/Discovery and logs it as "unknown element".
+        // The XML parser then ABORTS parsing of subsequent elements, dropping
+        // both <SPDPInterval> AND the entire <General> block that follows,
+        // which silently disables the <NetworkInterface> binding.
+        // Verified on macOS: removing this element makes <NetworkInterface>
+        // honored (bogus interface name now rejected). Keep the element
+        // suppressed for all modes so unicast users can rely on Interfaces.
+        (void)0;
 
         // Faster SPDP discovery for mobile devices (default is 30s)
         if (!xml_append(&xml, &offset, "      <SPDPInterval>1s</SPDPInterval>\n")) {
