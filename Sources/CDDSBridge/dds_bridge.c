@@ -253,6 +253,22 @@ static char* build_domain_config_xml(int32_t domain_id, const bridge_discovery_c
     // Keep default MaxMessageSize (14720B) and FragmentSize (1344B).
     // Large payloads like camera images are automatically fragmented at
     // the DDS level by CycloneDDS's RTPS fragmentation (DATA_FRAG).
+
+    // [ARROSkit ADR-0016] DontRoute=true: skip the kernel routing table for
+    // outbound DDS traffic and send only through the bound NetworkInterface.
+    // Required on iOS, where the device has multiple WiFi interfaces
+    // (en0=infra Wi-Fi, awdl0=AirDrop peer-to-peer, utun*=VPN, ap1=hotspot host).
+    // Without this, kernel auto-routing can pick awdl0/utun for iPhone↔iPhone
+    // unicast SPDP responses even though `<NetworkInterface name="en0">` is set,
+    // because that element specifies preference but not exclusivity.
+    // CycloneDDS docs explicitly recommend DontRoute in multi-interface setups:
+    //   https://cyclonedds.io/docs/cyclonedds/latest/config/network_interfaces.html
+    // Benign on macOS / single-interface hosts (verified: bogus interface still
+    // rejected, en0 master/slave discovery still converges).
+    if (!xml_append(&xml, &offset, "      <DontRoute>true</DontRoute>\n")) {
+        return NULL;
+    }
+
     if (!xml_append(&xml, &offset, "    </General>\n")) {
         return NULL;
     }
